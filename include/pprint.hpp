@@ -69,6 +69,26 @@ SOFTWARE.
 #include <cxxabi.h>
 #endif
 
+#include "soraxas_cpp_toolbox/external/ordered-map/ordered_map.h"
+
+#if __cplusplus < 201703L
+#include "soraxas_cpp_toolbox/external/variant.hpp"
+
+namespace std {
+template< class... >
+using void_t = void;
+
+template< class T >
+inline constexpr bool is_enum_v = is_enum<T>::value;
+
+template< class T >
+inline constexpr bool is_signed_v = is_signed<T>::value;
+
+using mpark::variant;
+using mpark::visit;
+}
+#endif
+
 // Check if a type is stream writable, i.e., std::cout << foo;
 template<typename S, typename T, typename = void>
 struct is_to_stream_writable: std::false_type {};
@@ -136,6 +156,7 @@ auto operator<<(std::basic_ostream<Ch, Tr>& os, std::tuple<Args...> const& t)
 #  define MAGIC_ENUM_RANGE_MAX 128
 #endif
 
+#if __cplusplus >= 201703L
 namespace magic_enum {
 
   // Enum value must be in range [-MAGIC_ENUM_RANGE_MAX, MAGIC_ENUM_RANGE_MIN]. By default  MAGIC_ENUM_RANGE_MIN = -128, MAGIC_ENUM_RANGE_MAX = 128.
@@ -314,6 +335,7 @@ namespace magic_enum {
   template <typename T>
   inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
 
+#if __cplusplus >= 201703L
   // Obtains enum value from enum string name.
   template <typename E, typename = detail::enable_if_enum_t<E>>
   [[nodiscard]] constexpr std::optional<E> enum_cast(std::string_view value) noexcept {
@@ -333,6 +355,7 @@ namespace magic_enum {
       return static_cast<E>(value);
     }
   }
+#endif
 
   // Returns enum value at specified index.
   // No bounds checking is performed: the behavior is undefined if index >= number of enum values.
@@ -416,6 +439,7 @@ namespace magic_enum {
   } // namespace magic_enum::ops
 
 } // namespace magic_enum
+#endif
 
 namespace pprint {
 
@@ -610,6 +634,7 @@ namespace pprint {
       return demangle(typeid(t).name());
     }
 
+#if __cplusplus >= 201703L
     template <typename T>
     typename std::enable_if<std::is_enum<T>::value == true, void>::type
     print_internal(T value, size_t indent = 0, const std::string& line_terminator = "\n", size_t level = 0) {
@@ -623,6 +648,7 @@ namespace pprint {
                 << line_terminator;
       }
     }
+#endif
 
     template <typename T>
     typename std::enable_if<std::is_class<T>::value == true &&
@@ -646,6 +672,7 @@ namespace pprint {
         is_specialization<T, std::map>::value == false &&
         is_specialization<T, std::multimap>::value == false &&
         is_specialization<T, std::unordered_map>::value == false &&
+        is_specialization<T, tsl::ordered_map>::value == false &&
         is_specialization<T, std::unordered_multimap>::value == false, void>::type
     print_internal(T value, size_t indent = 0, const std::string& line_terminator = "\n", size_t level = 0) {
       stream_ << std::string(indent, ' ') << value << line_terminator;
@@ -673,6 +700,7 @@ namespace pprint {
             is_specialization<T, std::map>::value == false &&
             is_specialization<T, std::multimap>::value == false &&
             is_specialization<T, std::unordered_map>::value == false &&
+            is_specialization<T, tsl::ordered_map>::value == false &&
             is_specialization<T, std::unordered_multimap>::value == false, void>::type
             print_internal(T value, size_t indent = 0, const std::string& line_terminator = "\n", size_t level = 0) {
       stream_ << std::string(indent, ' ') << "<Object " << type(value) << ">"
@@ -974,6 +1002,7 @@ namespace pprint {
     typename std::enable_if<is_specialization<T, std::map>::value == true ||
             is_specialization<T, std::multimap>::value == true ||
             is_specialization<T, std::unordered_map>::value == true ||
+            is_specialization<T, tsl::ordered_map>::value == true ||
             is_specialization<T, std::unordered_multimap>::value == true, void>::type
             print_internal(const T& value, size_t indent = 0, const std::string& line_terminator = "\n", size_t level = 0) {
       typedef typename T::mapped_type Value;
@@ -1086,6 +1115,7 @@ namespace pprint {
       std::visit([=](const auto& value) { print_internal(value, indent, line_terminator, level); }, value);
     }
 
+#if __cplusplus >= 201703L
     template <typename T>
     void print_internal(std::optional<T> value, size_t indent = 0,
         const std::string& line_terminator = "\n", size_t level = 0) {
@@ -1096,6 +1126,7 @@ namespace pprint {
         print_internal_without_quotes("nullopt", indent, line_terminator, level);
       }
     }
+#endif
 
     template <typename Container>
     typename std::enable_if<is_specialization<Container, std::queue>::value, void>::type
