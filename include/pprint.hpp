@@ -69,25 +69,8 @@ SOFTWARE.
 #include <cxxabi.h>
 #endif
 
-#include "soraxas_cpp_toolbox/external/ordered-map/ordered_map.h"
-
-#if __cplusplus < 201703L
-#include "soraxas_cpp_toolbox/external/variant.hpp"
-
-namespace std {
-template< class... >
-using void_t = void;
-
-template< class T >
-inline constexpr bool is_enum_v = is_enum<T>::value;
-
-template< class T >
-inline constexpr bool is_signed_v = is_signed<T>::value;
-
-using mpark::variant;
-using mpark::visit;
-}
-#endif
+#include "soraxas_toolbox/external/ordered-map/ordered_map.h"
+#include "soraxas_toolbox/future.h"
 
 // Check if a type is stream writable, i.e., std::cout << foo;
 template<typename S, typename T, typename = void>
